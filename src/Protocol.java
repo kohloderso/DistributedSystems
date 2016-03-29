@@ -26,12 +26,10 @@ public class Protocol {
             jsonoperands.add(operand);
         }
         jsonObject.put("operands", jsonoperands);
+
+        // send Information to Server
+        sendJSON(jsonObject, socket);
         try {
-            // send Information to Server
-            OutputStream out = socket.getOutputStream();
-            PrintWriter outToServer = new PrintWriter(out);
-            jsonObject.writeJSONString(outToServer);
-            outToServer.flush();
             socket.shutdownOutput();
         } catch (IOException e) {
             e.printStackTrace();
@@ -39,17 +37,8 @@ public class Protocol {
     }
 
     static int getResult(Socket socket) {
-        Long result = new Long(0);
-        try {
-            InputStreamReader inFromServer = new InputStreamReader(socket.getInputStream());
-            JSONParser parser = new JSONParser();
-            JSONObject resultObj = (JSONObject)parser.parse(inFromServer);
-            result = (Long) resultObj.get("result");
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
+        JSONObject resultObj = receiveJSON(socket);
+        Long result = (Long) resultObj.get("result");
         return result.intValue();
     }
 
@@ -60,26 +49,17 @@ public class Protocol {
     static int processRequest(Socket socket) {
         Long result = new Long(0);
 
-        try {
-            InputStreamReader inFromClient = new InputStreamReader(socket.getInputStream());
-            JSONParser parser = new JSONParser();
-            JSONObject requestObj = (JSONObject)parser.parse(inFromClient);
-            String operation = (String) requestObj.get("operation");
-            JSONArray operands = (JSONArray) requestObj.get("operands");
+        JSONObject requestObj = receiveJSON(socket);
+        String operation = (String) requestObj.get("operation");
+        JSONArray operands = (JSONArray) requestObj.get("operands");
 
-            switch (operation) {
-                case "+": result = (Long)operands.get(0) + (Long)operands.get(1); break;
-                //case "-": result = (int)operands.get(0) + (int)operands.get(1); break;
-                //case "*": result = (int)operands.get(0) + (int)operands.get(1); break;
-                //case "lucas": result = (int)operands.get(0); break; // TODO
-                default:
-                    System.out.println("Operation not supported");
-            }
-            //inFromClient.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
-            e.printStackTrace();
+        switch (operation) {
+            case "+": result = (Long)operands.get(0) + (Long)operands.get(1); break;
+            case "-": result = (Long)operands.get(0) + (Long)operands.get(1); break;
+            case "*": result = (Long)operands.get(0) + (Long)operands.get(1); break;
+            case "lucas": result = lucas(((Long)operands.get(0)).intValue()); break;
+            default:
+                System.out.println("Operation not supported");
         }
 
         return result.intValue();
@@ -89,17 +69,43 @@ public class Protocol {
         JSONObject resultObj = new JSONObject();
         resultObj.put("result", result);
 
-        // send Information to Client
+        sendJSON(resultObj, socket);
+    }
+
+
+    static JSONObject receiveJSON(Socket socket) {
+        JSONObject obj = null;
         try {
-            PrintWriter outToClient = new PrintWriter(socket.getOutputStream());
-            resultObj.writeJSONString(outToClient);
-            outToClient.flush();
+            InputStreamReader in = new InputStreamReader(socket.getInputStream());
+            JSONParser parser = new JSONParser();
+            obj = (JSONObject)parser.parse(in);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return obj;
+    }
+
+    static void sendJSON(JSONObject jsonObject, Socket socket) {
+        try {
+            PrintWriter out = new PrintWriter(socket.getOutputStream());
+            jsonObject.writeJSONString(out);
+            out.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
 
+    public static long lucas(final int n)
+    {
+        return lucasTailRec(2, 1, n);
+    }
 
+    private static long lucasTailRec(final long a, final long b, final int n)
+    {
+        return n < 1 ? a : n == 1 ?  b : lucasTailRec(b, a + b, n - 1);
     }
 
 
