@@ -3,10 +3,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
 
 
@@ -29,11 +26,18 @@ public class Protocol {
 
         // send Information to Server
         sendJSON(jsonObject, socket);
-        try {
-            socket.shutdownOutput();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    }
+
+    static boolean authenticate(String username, Socket socket) {
+        // send username
+        JSONObject userObj = new JSONObject();
+        userObj.put("username", username);
+        Protocol.sendJSON(userObj, socket);
+
+        // receive answer
+        JSONObject answerObj = receiveJSON(socket);
+        Boolean answer = (Boolean) answerObj.get("authenticated");
+        return answer;
     }
 
     static int getResult(Socket socket) {
@@ -41,6 +45,7 @@ public class Protocol {
         Long result = (Long) resultObj.get("result");
         return result.intValue();
     }
+
 
     /**
      *
@@ -77,8 +82,10 @@ public class Protocol {
         JSONObject obj = null;
         try {
             InputStreamReader in = new InputStreamReader(socket.getInputStream());
+            BufferedReader reader = new BufferedReader(in);
+            String message = reader.readLine();
             JSONParser parser = new JSONParser();
-            obj = (JSONObject)parser.parse(in);
+            obj = (JSONObject)parser.parse(message);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ParseException e) {
@@ -90,7 +97,7 @@ public class Protocol {
     static void sendJSON(JSONObject jsonObject, Socket socket) {
         try {
             PrintWriter out = new PrintWriter(socket.getOutputStream());
-            jsonObject.writeJSONString(out);
+            out.write(jsonObject.toJSONString() + "\n");//jsonObject.writeJSONString(out);
             out.flush();
         } catch (IOException e) {
             e.printStackTrace();

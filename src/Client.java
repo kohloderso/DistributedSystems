@@ -1,3 +1,5 @@
+import org.json.simple.JSONObject;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -17,15 +19,22 @@ public class Client {
             Socket clientSocket = new Socket(socketAddress.getAddress(), socketAddress.getPort());
             System.out.println("connected client to server " + clientSocket.getRemoteSocketAddress());
 
-            Protocol.request(clientSocket, username, operation, operands);
-            System.out.println("sent request");
+            // authenticate
+            if(Protocol.authenticate(username, clientSocket)) {
+                System.out.println("authentication successful");
 
-            result = Protocol.getResult(clientSocket);
-            System.out.println("received result " + result);
+                Protocol.request(clientSocket, username, operation, operands);
+                System.out.println("sent request");
+
+                result = Protocol.getResult(clientSocket);
+                System.out.println("received result " + result);
+
+            } else {
+                System.out.println("authentication failure");
+            }
 
             clientSocket.close();
             System.out.println("client closed connection");
-
         } catch (IOException e) {
             e.printStackTrace();
         }
