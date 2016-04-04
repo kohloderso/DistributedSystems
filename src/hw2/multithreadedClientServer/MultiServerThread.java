@@ -1,6 +1,5 @@
 package hw2.multithreadedClientServer;
 
-import hw2.simpleClientServer.*;
 import org.json.simple.JSONObject;
 
 import java.io.IOException;

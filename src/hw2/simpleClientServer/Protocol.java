@@ -16,9 +16,8 @@ public class Protocol {
      * Client side of communication. Send request to server in JSON.
      * @param socket: Socket connected to the server
      */
-    static void request(Socket socket, String username, String operation, int... operands) {
+    static void request(Socket socket, String operation, int... operands) {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("username", username);
         jsonObject.put("operation", operation);
         JSONArray jsonoperands = new JSONArray();
         for(int operand: operands) {
