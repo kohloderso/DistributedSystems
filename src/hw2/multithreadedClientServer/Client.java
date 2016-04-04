@@ -1,4 +1,4 @@
-import org.json.simple.JSONObject;
+package hw2.multithreadedClientServer;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

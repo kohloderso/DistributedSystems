@@ -1,8 +1,11 @@
+package hw2.simpleClientServer;
+
 import org.json.simple.JSONObject;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,7 +26,8 @@ public class Server {
             while(true) {
 
                 Socket server = serverSocket.accept();
-                System.out.println("accepted client " + server.getRemoteSocketAddress());
+                SocketAddress clientAdd = server.getRemoteSocketAddress();
+                System.out.println("accepted client " + clientAdd);
 
 
                 boolean authenticated = false;
@@ -47,7 +51,7 @@ public class Server {
                 }
 
                 server.close();
-                System.out.println("server closed connection");
+                System.out.println("server closed connection to " + clientAdd);
             }
         } catch (IOException e) {
             e.printStackTrace();
