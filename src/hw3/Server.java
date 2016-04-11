@@ -13,53 +13,38 @@ import java.util.List;
 
 public class Server {
 
-    private static List<String> knownUsers = new ArrayList<String>(){{
-        add("hurz");
-        add("iceman");
-        add("cholibri");
-    }};
-
     public static void main(String[] args) {
+        boolean running = true;
         try {
-            ServerSocket serverSocket = new ServerSocket(Protocol.SERVER_PORT);
+            ServerSocket serverSocket = new ServerSocket(1234);
             System.out.println("server is ready");
 
             // make this service announcable
-            ServiceAnnouncer announcer = new ServiceAnnouncer(Protocol.ANNOUNCER_PORT, "myService", InetAddress.getLocalHost());
+            ServiceAnnouncer announcer = new ServiceAnnouncer(serverSocket.getLocalPort(), "myService", InetAddress.getLocalHost());
             new Thread(announcer).start();
-            while(true) {
+            while(running) {
 
                 Socket server = serverSocket.accept();
                 SocketAddress clientAdd = server.getRemoteSocketAddress();
                 System.out.println("accepted client " + clientAdd);
 
 
-                boolean authenticated = false;
-                JSONObject message = Protocol.receiveJSON(server);
-                String username = (String) message.get("username");
-                if(knownUsers.contains(username)) {
-                    authenticated = true;
-                }
-                System.out.println("authentication: " + authenticated);
-                JSONObject answer = new JSONObject();
-                answer.put("authenticated", authenticated);
-                Protocol.sendJSON(answer, server);
+                // get the request
+                JSONObject request = Protocol.receiveJSON(server);
+                System.out.println("got message: " + request);
 
-                if(authenticated) {
-                    // get the request from the authenticated client
-                    int result = Protocol.processRequest(server);
-                    System.out.println("processed result: " + result);
-
-                    Protocol.sendResult(server, result);
-                    System.out.println("sent result to client " + server.getRemoteSocketAddress());
-                }
+                if(request.containsKey("shutdown")) running = false;
 
                 server.close();
                 System.out.println("server closed connection to " + clientAdd);
             }
+            System.out.println("Server shutting down");
+            announcer.shutdown();
+            serverSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+
     }
 
 
