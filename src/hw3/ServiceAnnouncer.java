@@ -9,9 +9,9 @@ import java.net.*;
 public class ServiceAnnouncer implements Runnable {
     private int port;
     private String serviceName;
-    private SocketAddress address;
+    private InetAddress address;
 
-    public ServiceAnnouncer(int port, String serviceName, SocketAddress address) {
+    public ServiceAnnouncer(int port, String serviceName, InetAddress address) {
         this.port = port;
         this.serviceName = serviceName;
         this.address = address;
@@ -19,32 +19,33 @@ public class ServiceAnnouncer implements Runnable {
 
     @Override
     public void run() {
-        byte[] buffer = new byte[12];
+        byte[] buffer = new byte[32];
         DatagramSocket socket;
         try {
             socket = new DatagramSocket(port);
 
             while (true) {
 
-                final DatagramPacket packet = new DatagramPacket(buffer,
-                        buffer.length);
+                final DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
                 socket.receive(packet);
 
                 final String data = new String(packet.getData()).trim();
 
-                if (data.equalsIgnoreCase("Ping")) {
-                    System.out.println("Ping sent from client : "
+                if (data.equalsIgnoreCase("Discover_Server")) {
+                    System.out.println("Broadcast sent from client : "
                             + packet.getAddress().getHostAddress() + ":"
                             + packet.getPort());
 
+                    byte[] message = (serviceName + ":" + address).getBytes();
                     final DatagramPacket response = new DatagramPacket(
-                            InetAddress.getLocalHost().getAddress(),
-                            InetAddress.getLocalHost().getAddress().length,
+                            message,
+                            message.length,
                             packet.getAddress(), packet.getPort());
                     socket.send(response);
                 } else {
                     System.out.println("Invalid message: " + data);
+                    System.out.println("message lenght: " + packet.getData().length);
                 }
 
             }
