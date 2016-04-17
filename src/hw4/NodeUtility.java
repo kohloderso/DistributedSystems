@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.*;
+import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -99,12 +100,13 @@ public class NodeUtility {
                     connectionSocket = new Socket(randAddress.getHostName(), randAddress.getPort());
                     JSONObject packet = Protocol.makeJSONObject(table, myAddress, nodeName);
                     Protocol.sendJSON(packet, connectionSocket);
+                    System.out.println("sent: " + packet);
 
                     // wait for response TODO timeout
-                    JSONObject response = Protocol.receiveJSON(connectionSocket);
-                    System.out.println("resonse: " + response);
-                    JSONArray jsonnames = (JSONArray) response.get("Names");
-                    System.out.println("jsonNames: " + jsonnames);
+                    HashMap<String, InetSocketAddress> newEntries = Protocol.receiveAndParse(connectionSocket);
+                    System.out.println("response: " + newEntries);
+
+                    table.merge(newEntries);
 
                     Thread.sleep(5000);
 
@@ -132,24 +134,15 @@ public class NodeUtility {
 
         @Override
         public void run() {
-            String received;
-            try (PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-                 BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));) {
-                received = in.readLine();
-                System.out.println("received: " + received);
-                // TODO add to nodetable
-                JSONObject packet = Protocol.makeJSONObject(table, myAddress, nodeName);
-                Protocol.sendJSON(packet, clientSocket);
-                System.out.println("sent: " + packet);
+            HashMap<String, InetSocketAddress> newEntries = Protocol.receiveAndParse(clientSocket);
+            System.out.println("response: " + newEntries);
+            table.merge(newEntries);
 
-            } catch (Exception e) {
-            } finally {
-                try {
-                    clientSocket.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+            JSONObject packet = Protocol.makeJSONObject(table, myAddress, nodeName);
+            Protocol.sendJSON(packet, clientSocket);
+            System.out.println("sent: " + packet);
+
+
         }
 
     }

@@ -28,6 +28,14 @@ public class NodeTable {
         nodes.remove(name);
     }
 
+
+    public void merge(HashMap<String, InetSocketAddress> newTable) {
+        System.out.println("table before: " + nodes);
+        nodes.putAll(newTable);
+        nodes.remove(myName);
+        System.out.println("table after: " + nodes);
+    }
+
     public void merge(String[] names, InetSocketAddress[] addresses) {
         for(int i = 0; i < names.length; i++) {
             if(names[i] != myName) {

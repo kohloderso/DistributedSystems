@@ -45,7 +45,6 @@ public class Protocol {
             InputStreamReader in = new InputStreamReader(socket.getInputStream());
             BufferedReader reader = new BufferedReader(in);
             String message = reader.readLine();
-            System.out.println("message: " + message);
             JSONParser parser = new JSONParser();
             obj = (JSONObject)parser.parse(message);
         } catch (IOException e) {
@@ -72,21 +71,38 @@ public class Protocol {
      * @param mySocketAddress
      */
     static JSONObject makeJSONObject(NodeTable table, InetSocketAddress mySocketAddress, String myName) {
-        JSONArray socketAddresses = new JSONArray();
+        JSONArray hostNames = new JSONArray();
+        JSONArray ports = new JSONArray();
         JSONArray nodeNames = new JSONArray();
         nodeNames.addAll(table.getTable().keySet());
         for(InetSocketAddress node: table.getTable().values()) {
-            socketAddresses.add(node.toString());
+            hostNames.add(node.getHostName());
+            ports.add(node.getPort());
         }
 
         nodeNames.add(myName);
-        socketAddresses.add(mySocketAddress.toString());
+        hostNames.add(mySocketAddress.getHostName());
+        ports.add(mySocketAddress.getPort());
         JSONObject packet = new JSONObject();
         packet.put("Names", nodeNames);
-        packet.put("Addresses", socketAddresses);
+        packet.put("Hosts", hostNames);
+        packet.put("Ports", ports);
         return packet;
     }
 
+
+    static HashMap<String, InetSocketAddress> receiveAndParse(Socket socket) {
+        HashMap<String, InetSocketAddress> map = new HashMap<>();
+        JSONObject message = receiveJSON(socket);
+        JSONArray jsonnames = (JSONArray) message.get("Names");
+        JSONArray jsonHosts = (JSONArray) message.get("Hosts");
+        JSONArray jsonPorts = (JSONArray) message.get("Ports");
+        for(int i = 0; i < jsonnames.size(); i++) {
+            InetSocketAddress address = new InetSocketAddress((String) jsonHosts.get(i), ((Long)jsonPorts.get(i)).intValue());
+            map.put((String) jsonnames.get(i), address);
+        }
+        return map;
+    }
 
 
 
