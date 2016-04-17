@@ -18,24 +18,13 @@ public class Protocol {
 
     static int initPort = 1234;
 
-    static void sendShutdownRequest(Socket socket) {
+
+    static void sendBroadcastMessage(Socket socket, String message, String senderName, int messageID) {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("shutdown", true);
+        jsonObject.put("Broadcast", message);
+        jsonObject.put("Sender", senderName);
+        jsonObject.put("ID", messageID);
         sendJSON(jsonObject, socket);
-    }
-
-    static void sendSimpleMessage(Socket socket, String message) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("message", message);
-        sendJSON(jsonObject, socket);
-    }
-
-
-    static void sendResult(Socket socket, int result) {
-        JSONObject resultObj = new JSONObject();
-        resultObj.put("result", result);
-
-        sendJSON(resultObj, socket);
     }
 
 
@@ -74,16 +63,17 @@ public class Protocol {
         JSONArray hostNames = new JSONArray();
         JSONArray ports = new JSONArray();
         JSONArray nodeNames = new JSONArray();
-        nodeNames.addAll(table.getTable().keySet());
-        for(InetSocketAddress node: table.getTable().values()) {
-            hostNames.add(node.getHostName());
-            ports.add(node.getPort());
+        nodeNames.addAll(table.getNames());
+        for(InetSocketAddress address: table.getAddresses()) {
+            hostNames.add(address.getHostName());
+            ports.add(address.getPort());
         }
 
         nodeNames.add(myName);
         hostNames.add(mySocketAddress.getHostName());
         ports.add(mySocketAddress.getPort());
         JSONObject packet = new JSONObject();
+        packet.put("Addresses", true);
         packet.put("Names", nodeNames);
         packet.put("Hosts", hostNames);
         packet.put("Ports", ports);
@@ -91,9 +81,8 @@ public class Protocol {
     }
 
 
-    static HashMap<String, InetSocketAddress> receiveAndParse(Socket socket) {
+    static HashMap<String, InetSocketAddress> parseAddresses(JSONObject message) {
         HashMap<String, InetSocketAddress> map = new HashMap<>();
-        JSONObject message = receiveJSON(socket);
         JSONArray jsonnames = (JSONArray) message.get("Names");
         JSONArray jsonHosts = (JSONArray) message.get("Hosts");
         JSONArray jsonPorts = (JSONArray) message.get("Ports");

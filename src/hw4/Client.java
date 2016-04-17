@@ -13,12 +13,44 @@ import java.net.UnknownHostException;
 public class Client {
 
     public static void main(String[] args) {
-        Client client = new Client();
+
+        NodeUtility utility = null;
         try {
-            NodeUtility utility = new NodeUtility(3, "myClient", new InetSocketAddress(InetAddress.getLocalHost(), hw4.Protocol.initPort), null, null);
+            utility = new NodeUtility(3, "myClient", new InetSocketAddress(InetAddress.getLocalHost(), hw4.Protocol.initPort), null, null);
         } catch (UnknownHostException e) {
             e.printStackTrace();
         };
+        int n = 9;
+        for(int i = 1; i < n; i++) {
+            try {
+                Thread.sleep(100);
+                new NodeUtility(3, "myClient" + i, new InetSocketAddress(InetAddress.getLocalHost(), hw4.Protocol.initPort + i), new InetSocketAddress(InetAddress.getLocalHost(),hw4.Protocol.initPort), "myClient");
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        utility.sendBroadcast("1");
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        utility.sendBroadcast("2");
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        utility.sendBroadcast("3");
+
+
     }
 
 }
