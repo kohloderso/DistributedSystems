@@ -81,6 +81,11 @@ public class NodeUtility {
         return lookupAddress;   // hopefully some node responded and the address is now in this global variable
     }
 
+
+    /**
+     * put message into JSONObject with qualifier "Broadcast" to every node in the table
+     * @param message
+     */
     public void sendBroadcast(String message) {
         System.out.println(myName + " sending broadcast: " + message);
         int id = messageIDs.getAndIncrement();
@@ -96,6 +101,10 @@ public class NodeUtility {
         }
     }
 
+    /**
+     * send JSONObject on to every node in the table
+     * @param broadcast
+     */
     private void sendBroadcast(JSONObject broadcast) {
         for(Map.Entry<String, InetSocketAddress> entry: table.getEntries()) {
             try {
