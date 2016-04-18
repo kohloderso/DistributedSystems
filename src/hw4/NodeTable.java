@@ -32,8 +32,8 @@ public class NodeTable {
         nodes.putAll(newTable);
         nodes.remove(myName);
         chooseSubset();
-        //if(getEntries().equals(copy))
-            //System.out.println("new table " + myName + ": " + nodes.keySet());
+        if(getEntries().equals(copy))
+            System.out.println("new table " + myName + ": " + nodes.keySet());
     }
 
     public void chooseSubset() {

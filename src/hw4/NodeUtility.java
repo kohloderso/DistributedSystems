@@ -7,10 +7,8 @@ import java.net.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -24,6 +22,9 @@ public class NodeUtility {
     private boolean listening = true;
     private Thread requestThread = null;
     private Thread listenerThread = null;
+    private AtomicBoolean lookupInProgress = new AtomicBoolean(false);
+    private String lookupName = null;
+    private InetSocketAddress lookupAddress = null;
     private ConcurrentHashMap<String, Set<Integer>> receivedMessages = new ConcurrentHashMap<>();
 
     public NodeUtility(int n, String name, InetSocketAddress myAddress, InetSocketAddress initAddress, String initName) {
@@ -32,13 +33,52 @@ public class NodeUtility {
 
         table = new NodeTable(n, name, initName, initAddress);
 
-        /*listener thread accepts requests from other peers*/
+        // listener thread accepts requests from other peers, like broadcasts, lookup requests, new node tables
         listenerThread = (new Thread(new ListenerThread()));
         listenerThread.start();
 
-        /*start request thread which regularly (every 5 seconds) updates the node table */
+        // start request thread which updates the node table every 5 seconds
         requestThread = (new Thread(new RequestThread()));
         requestThread.start();
+    }
+
+    public void disconnect() {
+        listening = false;
+    }
+
+    /**
+     *
+     * @param nodeName
+     * @return address of the node with this name, null if it couldn't be found after 2 seconds
+     */
+    public InetSocketAddress performLookup(String nodeName) {
+        // check if it's this node
+        if(nodeName.equals(myName)) return myAddress;
+
+        // look into the table of this node
+        InetSocketAddress address = table.getAddress(nodeName);
+        if(address != null) return address;
+
+        // send the request on to all other nodes
+        lookupName = nodeName;
+        lookupInProgress.set(true);
+        lookupAddress = null;
+
+        JSONObject lookupObject = new JSONObject();
+        lookupObject.put("LookupRequest", true);
+        lookupObject.put("NodeName", nodeName);
+        // put the information in who wants to find the node
+        lookupObject.put("Port", myAddress.getPort());
+        lookupObject.put("Host", myAddress.getHostName());
+        sendBroadcast(lookupObject);
+
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        lookupInProgress.set(false);
+        return lookupAddress;   // hopefully some node responded and the address is now in this global variable
     }
 
     public void sendBroadcast(String message) {
@@ -48,6 +88,7 @@ public class NodeUtility {
             try {
                 Socket socket = new Socket(entry.getValue().getAddress(), entry.getValue().getPort());
                 Protocol.sendBroadcastMessage(socket, message, myName, id);
+                socket.close();
             } catch (IOException e) {
                 System.out.println(myName + " deleting " + entry.getKey());
                 table.delete(entry.getKey());
@@ -60,6 +101,7 @@ public class NodeUtility {
             try {
                 Socket socket = new Socket(entry.getValue().getAddress(), entry.getValue().getPort());
                 Protocol.sendJSON(broadcast, socket);
+                socket.close();
             } catch (IOException e) {
                 System.out.println(myName + " deleting " + entry.getKey());
                 table.delete(entry.getKey());
@@ -89,7 +131,7 @@ public class NodeUtility {
                     try {
                         service.execute(new RequestHandler(p2pServerSocket.accept()));
                     } catch (SocketTimeoutException e) {
-                        //TODO check listening variable
+                        if(!listening) break;
                     }
                 }
 
@@ -146,7 +188,7 @@ public class NodeUtility {
                     Thread.sleep(5000);
 
                 } catch (IOException e) {
-                    System.out.println(myName + " deleting " + randAddress);
+                    System.out.println(myName + " deleting " + randNode);
                     table.delete(randNode);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -177,8 +219,17 @@ public class NodeUtility {
                handleAddresses(message);
             } else if(message.containsKey("Broadcast")) {
                 handleBroadcast(message);
+            } else if(message.containsKey("LookupRequest")) {
+                handleLookupRequest(message);
+            } else if(message.containsKey("LookupResponse")) {
+                handleLookupResponse(message);
             } else {
                 System.out.println("Don't know what to do with message: " + message);
+            }
+            try {
+                clientSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
 
@@ -202,18 +253,19 @@ public class NodeUtility {
 
             String messageString = (String)messageObject.get("Broadcast");
             Set<Integer> ids = receivedMessages.get(sender);
-            if(ids == null) {
+            if(ids == null) {   // no messages from this sender in the table
                 System.out.println(myName + " received new broadcast: " + messageString);
                 // add message to collection
                 ids = new ConcurrentSkipListSet<Integer>();
                 ids.add(id);
                 receivedMessages.put(sender, ids);
-                sendBroadcast(messageObject);
-            } else if(!ids.contains(id)) {
+                sendBroadcast(messageObject);   // send message on to all nodes in the table
+            } else if(!ids.contains(id)) {  // no entry with this id from this sender
                 System.out.println(myName + " received new broadcast: " + messageString);
                 ids.add(id);
-                sendBroadcast(messageObject);
-            } else if(ids.contains(id)) return;
+                sendBroadcast(messageObject); // send message on to all nodes in the table
+            } else if(ids.contains(id)) return; // this node has already received the message => ignore it
+
             // wait a long time, expect message to propagate through network
             try {
                 Thread.sleep(5000);
@@ -222,6 +274,40 @@ public class NodeUtility {
             }
             // delete message, because it will no longer be needed
             ids.remove(id);
+        }
+
+        public void handleLookupRequest(JSONObject messageObject) {
+            String nodeName = (String)messageObject.get("NodeName");
+            InetSocketAddress address = table.getAddress(nodeName);
+
+            // if this node has the address of the looked for node, it will send a response to the inquirer
+            if(address != null) {
+                String inquirerHost = (String)messageObject.get("Host");
+                int inquirerPort = ((Long)messageObject.get("Port")).intValue();
+                try {
+                    Socket socket = new Socket(inquirerHost, inquirerPort);
+                    JSONObject response = new JSONObject();
+                    response.put("NodeName", nodeName);
+                    response.put("LookupResponse", true);
+                    response.put("Port", address.getPort());
+                    response.put("Host", address.getHostName());
+                    Protocol.sendJSON(response, socket);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else {    // else send on the lookup message to all nodes in the table
+                sendBroadcast(messageObject);
+            }
+        }
+
+        public void handleLookupResponse(JSONObject messageObject) {
+            String nodeName = (String)messageObject.get("NodeName");
+            if(lookupInProgress.get() && lookupName.equals(nodeName)) {
+                int port = ((Long)messageObject.get("Port")).intValue();
+                String host = (String)messageObject.get("Host");
+                lookupAddress = new InetSocketAddress(host, port);   // set global variable
+            }
+
         }
 
     }

@@ -93,6 +93,9 @@ public class Protocol {
         return map;
     }
 
+    static void sendLookupResponse(String nodeName, InetSocketAddress nodeAddress, InetSocketAddress inquirerAddress) {
+
+    }
 
 
 }

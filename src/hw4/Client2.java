@@ -5,15 +5,34 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
 
+/**
+ * initalize more nodes
+ */
 public class Client2 {
 
     public static void main(String[] args) {
-        Client2 client = new Client2();
+        NodeUtility[] nodes = new NodeUtility[6];
+        int n = 6;
+        for(int i = 1; i < n; i++) {
+            try {
+                Thread.sleep(100);
+                nodes[i] = new NodeUtility(3, "myClient" + i, new InetSocketAddress(InetAddress.getLocalHost(), hw4.Protocol.initPort + i), new InetSocketAddress(InetAddress.getLocalHost(),hw4.Protocol.initPort), "myClient");
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
         try {
-            NodeUtility utility = new NodeUtility(3, "myClient2", new InetSocketAddress(InetAddress.getLocalHost(), hw4.Protocol.initPort+1), new InetSocketAddress(InetAddress.getLocalHost(), hw4.Protocol.initPort), "myClient");
-        } catch (UnknownHostException e) {
+            Thread.sleep(4000);
+        } catch (InterruptedException e) {
             e.printStackTrace();
-        };
+        }
+
+        // disconnect a node
+        nodes[3].disconnect();
+        nodes[4].disconnect();
     }
 
 }
