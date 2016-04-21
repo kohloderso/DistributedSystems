@@ -48,6 +48,23 @@ public class MyRemoteService implements Service {
         return lucasTailRec(2, 1, x);
     }
 
+    @Override
+    public int longOp(int x) throws RemoteException {
+        try {
+            System.out.println("called longOp");
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println("longOp done");
+        return 42;
+    }
+
+    @Override
+    public <T> T computationTask(IComputationTask<T> t) throws RemoteException {
+        return t.executeTask();
+    }
+
     private static int lucasTailRec(final int a, final int b, final int n)
     {
         return n < 1 ? a : n == 1 ?  b : lucasTailRec(b, a + b, n - 1);

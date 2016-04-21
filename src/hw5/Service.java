@@ -14,5 +14,8 @@ public interface Service extends Remote {
 
     public int lucas(int x) throws RemoteException;
 
+    public int longOp(int x) throws RemoteException;
+
+    public <T>  T computationTask(IComputationTask<T> t) throws RemoteException;
 
 }
