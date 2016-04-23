@@ -23,7 +23,7 @@ public class Client {
             if(Protocol.authenticate(username, clientSocket)) {
                 System.out.println("authentication successful");
 
-                Protocol.request(clientSocket, username, operation, operands);
+                Protocol.request(clientSocket, operation, operands);
                 System.out.println("sent request");
 
                 result = Protocol.getResult(clientSocket);

@@ -12,7 +12,7 @@ public class Client2 {
 
     public static void main(String[] args) {
         NodeUtility[] nodes = new NodeUtility[6];
-        int n = 6;
+        int n = 9;
         for(int i = 1; i < n; i++) {
             try {
                 Thread.sleep(100);

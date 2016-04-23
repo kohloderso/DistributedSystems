@@ -1,8 +1,10 @@
 package hw2.simpleClientServer;
 
+import hw3.ServiceAnnouncer;
 import org.json.simple.JSONObject;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
@@ -20,7 +22,11 @@ public class Server {
 
     public static void main(String[] args) {
         try {
-            ServerSocket serverSocket = new ServerSocket(Protocol.SERVER_PORT);
+            ServerSocket serverSocket = new ServerSocket(1234);
+
+            // make this service announcable
+            ServiceAnnouncer announcer = new ServiceAnnouncer(8888, "myService", InetAddress.getLocalHost());
+            new Thread(announcer).start();
             System.out.println("server is ready");
 
             while(true) {

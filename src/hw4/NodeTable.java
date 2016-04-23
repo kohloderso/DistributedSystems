@@ -4,9 +4,7 @@ import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Created by christina on 14.04.16.
- */
+
 public class NodeTable {
     private String myName;
     private ConcurrentHashMap<String, InetSocketAddress> nodes = new ConcurrentHashMap<>();
@@ -32,8 +30,8 @@ public class NodeTable {
         nodes.putAll(newTable);
         nodes.remove(myName);
         chooseSubset();
-        if(getEntries().equals(copy))
-            System.out.println("new table " + myName + ": " + nodes.keySet());
+        //if(getEntries().equals(copy))
+          //  System.out.println("new table " + myName + ": " + nodes.keySet());
     }
 
     public void chooseSubset() {

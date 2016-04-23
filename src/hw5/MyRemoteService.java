@@ -51,12 +51,12 @@ public class MyRemoteService implements Service {
     @Override
     public int longOp(int x) throws RemoteException {
         try {
-            System.out.println("called longOp");
+            //System.out.println("called longOp");
             Thread.sleep(2000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        System.out.println("longOp done");
+        //System.out.println("longOp done");
         return 42;
     }
 

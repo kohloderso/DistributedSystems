@@ -1,12 +1,7 @@
 package hw4;
 
-import hw3.Protocol;
-import hw3.ServiceLocator;
-
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.net.UnknownHostException;
 
 
