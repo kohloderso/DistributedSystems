@@ -5,11 +5,14 @@ import java.rmi.RemoteException;
 import java.util.Random;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 
 public class Client {
+
+    private String answer;
 
     public static void main(String args[]) {
         try {
@@ -37,11 +40,6 @@ public class Client {
             e.printStackTrace();
         }
 
-
-
-
     }
-
-
 
 }

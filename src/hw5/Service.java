@@ -18,4 +18,6 @@ public interface Service extends Remote {
 
     public <T>  T computationTask(IComputationTask<T> t) throws RemoteException;
 
+    public void deepThought(String question, Listener callback) throws RemoteException;
+
 }

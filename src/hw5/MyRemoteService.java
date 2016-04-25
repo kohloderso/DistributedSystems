@@ -4,9 +4,11 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Random;
 
 
 public class MyRemoteService implements Service {
+    Random rnd = new Random();
 
     public static void main(String[] args) {
         String name = "MyRemoteService";
@@ -21,7 +23,7 @@ public class MyRemoteService implements Service {
             registry.rebind(name, stub);
             System.out.println("bound");
             System.out.println(registry.list().toString());
-            System.out.println(registry.lookup("MyRemoteService"));
+            //System.out.println(registry.lookup("MyRemoteService"));
         } catch (Exception e) {
             System.err.println("buhu exception:");
             e.printStackTrace();
@@ -63,6 +65,29 @@ public class MyRemoteService implements Service {
     @Override
     public <T> T computationTask(IComputationTask<T> t) throws RemoteException {
         return t.executeTask();
+    }
+
+
+    @Override
+    public void deepThought(String question, Listener callback) {
+        Thread thinker = new Thread() {
+            public void run() {
+                System.out.println("Starting to think ...");
+                int randWait = rnd.nextInt(10000);
+                try {
+                    Thread.sleep(2000 + randWait);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    callback.onThinkingCompleted("The answer to your question '" + question + "' is probably 42.");
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("Sent answer");
+            }
+        };
+        thinker.start();
     }
 
     private static int lucasTailRec(final int a, final int b, final int n)
