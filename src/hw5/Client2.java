@@ -31,7 +31,7 @@ public class Client2 implements Listener, Serializable {
 
             // export
             Listener stub = (Listener) UnicastRemoteObject.exportObject(this, 0);
-            registry.rebind(listenerName, stub);
+            //registry.rebind(listenerName, stub);
             System.out.println("bound listener");
             for(String entry: registry.list()) {
                 System.out.println(entry);
@@ -50,7 +50,7 @@ public class Client2 implements Listener, Serializable {
 
             System.out.println(answer);
 
-            registry.unbind(listenerName);
+            //registry.unbind(listenerName);
             UnicastRemoteObject.unexportObject(this, true);
 
         } catch (Exception e) {
