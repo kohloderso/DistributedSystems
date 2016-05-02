@@ -36,7 +36,7 @@ public class Client {
                     jobs.remove(0);
                 }
             }
-            
+
             System.out.println("all jobs done");
 
             Callable<String> test = new CallableTest();

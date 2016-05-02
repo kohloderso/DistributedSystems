@@ -1,0 +1,19 @@
+c)
+
+i. 	Round Robin: For the first job choose server 1, for the secon job server 2 and so on. Until you have reached the last server n.
+For job n+1 choose server 1 again.
+
+ii.	First sort the servers by number of slots. The server with the most slots is called Server 1, the next is Server 2, ...
+Do this for every job: Give it to server 1. If server 1 rejects it, go to server 2, if server 2 rejects it go to the next one and so on.
+
+
+Collectable information: 
+- number of available servers
+- number of slots in each server
+- number of active jobs for each server => free slots
+
+optional ideas:
+- location of each server and each job request (to make useful job distributions)
+- some value indicating how fast each server is
+- some kind of priorities to choose which job is next (arrival time, expected workload, importance)
+
