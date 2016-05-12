@@ -1,3 +1,5 @@
+
+
 c)
 
 i. 	Round Robin: For the first job choose server 1, for the secon job server 2 and so on. Until you have reached the last server n.

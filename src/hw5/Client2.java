@@ -27,7 +27,7 @@ public class Client2 implements Listener, Serializable {
             Registry registry = LocateRegistry.getRegistry("localhost", 10000);
             service = (Service) registry.lookup(name);
 
-            String listenerName = "Listener" + id++;
+            String listenerName = "JobListener" + id++;
 
             // export
             Listener stub = (Listener) UnicastRemoteObject.exportObject(this, 0);
