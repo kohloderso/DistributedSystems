@@ -74,6 +74,7 @@ public class ChordNode {
         // check if the table needs an update with the new node
         for(int k = 0; k < m; k++) {
             int fingerStart = (n + (int)Math.pow(2, k)) % max;
+            if(fingerStart == fingerTable[k].n) continue;
             if(inInterval(fingerStart, fingerTable[k].n, node.n)) {
                 fingerTable[k] = node;
             }
