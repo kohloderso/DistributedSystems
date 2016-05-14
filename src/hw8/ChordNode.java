@@ -21,20 +21,19 @@ public class ChordNode {
     }
 
     public ChordNode findSuccessor(int id) {
+        if(id == n) return this;
         if(inInterval(n, fingerTable[0].n, id)) return fingerTable[0];
 
         // find largest entry in the fingertable that is still smaller than the n we're looking for
+        // => id has to be in interval between current node and the next node
         ChordNode node = fingerTable[0];
+        ChordNode nextNode = fingerTable[1];
         int i = 0;
-        if(node.n > id) {
-            while(i < m-1 && fingerTable[i].n > id) {
-                node = fingerTable[i];
-                i++;
-            }
-        }
-        while(i < m-1 && fingerTable[i].n <= id) {
-            node = fingerTable[i];
+        while(!inInterval(node.n, nextNode.n, id)) {
             i++;
+            node = nextNode;
+            nextNode = fingerTable[i+1];
+            if(i >=5 ) System.out.println("Noooooooooooooooooooooo");
         }
         return node.findSuccessor(id);
     }
@@ -81,7 +80,9 @@ public class ChordNode {
         }
         predecessor.newNode(node);
     }
-    private void update_others() {
+
+
+    /*private void update_others() {
         for(int i = 0; i < m; i++) {
             ChordNode p = findPredecessor(n - (int)Math.pow(2, i));
             while(p.getFinger(i).n > n) {
@@ -89,10 +90,10 @@ public class ChordNode {
                 p = p.predecessor;
             }
         }
-    }
+    }*/
 
     public void sendMSG(int nodeID) {
-
+        // TODO
     }
 
     public void setFinger(int i, ChordNode node) {
@@ -104,24 +105,31 @@ public class ChordNode {
     }
 
 
-    public void printFingers() {
-        for(int i = 0; i < m; i++) {
-            System.out.println(i + ": " + fingerTable[i].n);
-        }
-    }
+
 
     private boolean inInterval(int begin, int end, int id) {
         if(end <= begin) {
-            if(id < begin) {
-                id += max;
-            }
-            end += max;
+            // split interval in two
+            // interval 1: [begin,max]
+            if(begin <= id && id <= max) return true;
+            // interval 2: [0, end[
+            else if(0 <= id && id < end) return true;
         }
-        if(begin <= id && id < end) {
-            return true;
-        } else {
-            return false;
+        else {
+            return (begin <= id && id < end);
         }
+        return false;
     }
 
+    public String toString() {
+        return "Node " + n + "\n" + printFingers();
+    }
+
+    public String printFingers() {
+        String str = "";
+        for(int i = 0; i < m; i++) {
+            str += i + ": " + fingerTable[i].n + "\n";
+        }
+        return str;
+    }
 }

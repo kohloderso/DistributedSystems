@@ -28,16 +28,19 @@ public class Main {
 
 
         System.out.println("Node 1: ");
-        node1.printFingers();
+        System.out.println(node1.printFingers());
         System.out.println("Node 3: ");
-        node3.printFingers();
+        System.out.println(node3.printFingers());
         System.out.println("Node 7: ");
-        node7.printFingers();
+        System.out.println(node7.printFingers());
         System.out.println("Node 12: ");
         node12.printFingers();
         System.out.println("Node 25: ");
         node25.printFingers();
         System.out.println("Node 27: ");
         node27.printFingers();
+
+        ChordNode test = node1.findSuccessor(7);
+        System.out.println(test.toString());
     }
 }
