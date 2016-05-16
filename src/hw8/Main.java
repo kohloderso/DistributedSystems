@@ -21,10 +21,10 @@ public class Main {
         node7.join(node1);
         node12.join(node3);
         node15.join(node12);
-        node25.join(node12);
-        node27.join(node7);
         node8.join(node1);
         node19.join(node3);
+        node25.join(node12);
+        node27.join(node7);
 
 
         System.out.println("Node 1: ");
@@ -42,5 +42,10 @@ public class Main {
 
         ChordNode test = node1.findSuccessor(7);
         System.out.println(test.toString());
+
+        System.out.println("Sending message from 1 to 1");
+        node1.sendMSG(1, "Hello 1");
+        System.out.println("Sending message from 25 to 8");
+        node25.sendMSG(8, "Hello 8");
     }
 }

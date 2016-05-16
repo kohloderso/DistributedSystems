@@ -32,8 +32,8 @@ public class ChordNode {
         while(!inInterval(node.n, nextNode.n, id)) {
             i++;
             node = nextNode;
-            nextNode = fingerTable[i+1];
-            if(i >=5 ) System.out.println("Noooooooooooooooooooooo");
+            nextNode = fingerTable[(i+1) % m];
+            if(i >= m ) return fingerTable[m-1];
         }
         return node.findSuccessor(id);
     }
@@ -93,8 +93,34 @@ public class ChordNode {
         }
     }*/
 
-    public void sendMSG(int nodeID) {
-        // TODO
+    public void sendMSG(int nodeID, String message) {
+        if(nodeID == n) {
+            this.sendMsg(message);
+            return;
+        }
+        if(inInterval(n, fingerTable[0].n, nodeID)) {
+            fingerTable[0].sendMsg(message);
+            return;
+        }
+
+        // find largest entry in the fingertable that is still smaller than the n we're looking for
+        // => id has to be in interval between current node and the next node
+        ChordNode node = fingerTable[0];
+        ChordNode nextNode = fingerTable[1];
+        int i = 0;
+        while(!inInterval(node.n, nextNode.n, nodeID) && i < m) {
+            i++;
+            node = nextNode;
+            nextNode = fingerTable[(i+1) % m];
+            //if(i >= m ) fingerTable[m-1].sendMSG(nodeID, message);
+        }
+        System.out.println("going to node " + node.n);
+        node.sendMSG(nodeID, message);
+
+    }
+
+    public void sendMsg(String message) {
+        System.out.println("Node " + n + " received message: " + message);
     }
 
     public void setFinger(int i, ChordNode node) {
@@ -109,7 +135,7 @@ public class ChordNode {
 
 
     private boolean inInterval(int begin, int end, int id) {
-        if(end <= begin) {
+        if(end < begin) {
             // split interval in two
             // interval 1: [begin,max]
             if(begin <= id && id <= max) return true;
