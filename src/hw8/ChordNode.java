@@ -93,14 +93,14 @@ public class ChordNode {
         }
     }*/
 
-    public void sendMSG(int nodeID, String message) {
+    private int sendMsg(int nodeID, String message, int hops) {
         if(nodeID == n) {
             this.sendMsg(message);
-            return;
+            return hops;
         }
         if(inInterval(n, fingerTable[0].n, nodeID)) {
             fingerTable[0].sendMsg(message);
-            return;
+            return hops+1;
         }
 
         // find largest entry in the fingertable that is still smaller than the n we're looking for
@@ -115,8 +115,10 @@ public class ChordNode {
             //if(i >= m ) fingerTable[m-1].sendMSG(nodeID, message);
         }
         System.out.println("going to node " + node.n);
-        node.sendMSG(nodeID, message);
-
+        return node.sendMsg(nodeID, message, hops+1);
+    }
+    public int sendMSG(int nodeID, String message) {
+        return sendMsg(nodeID, message, 0);
     }
 
     public void sendMsg(String message) {
@@ -158,5 +160,9 @@ public class ChordNode {
             str += i + ": " + fingerTable[i].n + "\n";
         }
         return str;
+    }
+
+    public int getID() {
+        return n;
     }
 }
