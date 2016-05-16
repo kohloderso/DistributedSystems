@@ -47,5 +47,34 @@ public class Main {
         node1.sendMSG(1, "Hello 1");
         System.out.println("Sending message from 25 to 8");
         node25.sendMSG(8, "Hello 8");
+        System.out.println(node25.sendMSG(19, ""));
+
+        //createFullRing(12);
+    }
+
+    public static void createFullRing(int m) {
+        int max = (int) Math.pow(2,m);
+        ChordNode[] nodes = new ChordNode[max];
+
+        ChordNode firstNode = new ChordNode(0, m);
+        firstNode.join(null);
+        nodes[0] = firstNode;
+        for(int i = 1; i < max; i++) {
+            ChordNode node = new ChordNode(i, m);
+            node.join(firstNode);
+            nodes[i] = node;
+        }
+
+        int maxHops = 0;
+        double avgHops = 0;
+        for(int i = 0; i < max; i++) {
+            for(int j = 0; j < max; j++) {
+                int hops = nodes[i].sendMSG(nodes[j].getID(), "");
+                if(hops > maxHops) maxHops = hops;
+                avgHops = avgHops + (double)hops/(max * max);
+            }
+        }
+        System.out.println("average Hops: " + avgHops);
+        System.out.println("maxHops Hops: " + maxHops);
     }
 }
