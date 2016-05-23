@@ -21,10 +21,10 @@ public class Main {
         node7.join(node1);
         node12.join(node3);
         node15.join(node12);
-        node25.join(node12);
-        node27.join(node7);
         node8.join(node1);
         node19.join(node3);
+        node25.join(node12);
+        node27.join(node7);
 
 
         System.out.println("Node 1: ");
@@ -42,5 +42,39 @@ public class Main {
 
         ChordNode test = node1.findSuccessor(7);
         System.out.println(test.toString());
+
+        System.out.println("Sending message from 1 to 1");
+        node1.sendMSG(1, "Hello 1");
+        System.out.println("Sending message from 25 to 8");
+        node25.sendMSG(8, "Hello 8");
+        System.out.println(node25.sendMSG(19, ""));
+
+        //createFullRing(12);
+    }
+
+    public static void createFullRing(int m) {
+        int max = (int) Math.pow(2,m);
+        ChordNode[] nodes = new ChordNode[max];
+
+        ChordNode firstNode = new ChordNode(0, m);
+        firstNode.join(null);
+        nodes[0] = firstNode;
+        for(int i = 1; i < max; i++) {
+            ChordNode node = new ChordNode(i, m);
+            node.join(firstNode);
+            nodes[i] = node;
+        }
+
+        int maxHops = 0;
+        double avgHops = 0;
+        for(int i = 0; i < max; i++) {
+            for(int j = 0; j < max; j++) {
+                int hops = nodes[i].sendMSG(nodes[j].getID(), "");
+                if(hops > maxHops) maxHops = hops;
+                avgHops = avgHops + (double)hops/(max * max);
+            }
+        }
+        System.out.println("average Hops: " + avgHops);
+        System.out.println("maxHops Hops: " + maxHops);
     }
 }
