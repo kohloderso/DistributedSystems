@@ -24,9 +24,9 @@ public class CompClient implements Runnable{
 		//client2.start();
 		//client3.start();
 
-		//client1.join();
-		//client2.join();
-		//client3.join();
+//		client1.join();
+//		client2.join();
+//		client3.join();
 		
 		System.out.println("--------Starting Benchmark----------");
 
