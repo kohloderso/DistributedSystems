@@ -1,12 +1,8 @@
-package hw10;
+package hw10.otp;
 
 import java.util.concurrent.*;
 import java.net.*;
 import java.io.*;
-import java.math.*;
-import java.util.Random;
-
-import javax.xml.bind.DatatypeConverter;
 
 class CryptServer {
     public static final int listenPort = 9192;

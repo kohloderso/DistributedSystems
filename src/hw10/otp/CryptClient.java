@@ -1,9 +1,7 @@
-package hw10;
+package hw10.otp;
 
 import java.net.*;
 import java.io.*;
-import javax.xml.bind.DatatypeConverter;
-import java.nio.charset.Charset;
 
 public class CryptClient {
 	public final OTP encoding;

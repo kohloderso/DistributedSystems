@@ -17,6 +17,7 @@ import java.security.spec.KeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -26,59 +27,40 @@ public class RSAClient {
 	private KeyPair myKP;
 	private PublicKey partnerKey;
 
-
-
 	public RSAClient() {
-		String name = "client";
-		KeyPairGenerator kpg = null;
-		try {
-			kpg = KeyPairGenerator.getInstance("RSA");
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		}
-		kpg.initialize(512);
-		myKP = kpg.generateKeyPair();
-
-		try {
-			FileOutputStream out = new FileOutputStream("private" + name);
-			out.write(myKP.getPrivate().getEncoded());
-			out.close();
-			FileOutputStream out2 = new FileOutputStream("public" + name);
-			out2.write(myKP.getPublic().getEncoded());
-			out2.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		myKP = RSA.generateKP("client");
 
 		// get public key of other instance
-		Path path = Paths.get("public" + "server");
-		try {
-			byte[] encodedKey = Files.readAllBytes(path);
-			partnerKey =
-					KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(encodedKey));
-			System.out.println(partnerKey.toString());
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		} catch (InvalidKeySpecException e) {
-			e.printStackTrace();
+		partnerKey = RSA.getPublicKeyFromFile("server");
+		while(partnerKey == null) {
+			System.out.println("waiting for public key to be published");
+			try {
+				Thread.sleep(3000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			partnerKey = RSA.getPublicKeyFromFile("client");
 		}
+		System.out.println("acquired public key");
+	}
+
+	public void start() {
+		Scanner scan = new Scanner(System.in);
 
 		try {
 			socket = new Socket("localhost", RSAServer.port);
+			BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			while(true) {
+				System.out.println("Type in message: ");
+				String message = scan.nextLine();
+				sendMessage(message);
 
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+				String answer = in.readLine();
+				RSA.decrypt(answer, myKP.getPrivate());
 
-		sendMessage("hello world!");
+				if(message.equalsIgnoreCase("exit")) break;
+			}
 
-		try {
 			socket.close();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -87,24 +69,10 @@ public class RSAClient {
 
 	public void sendMessage(String message) {
 		// ENCRYPT using the PUBLIC key
+		String encrypted = RSA.encrypt(message, partnerKey);
 		try {
-			Cipher cipher = Cipher.getInstance("RSA");
-			cipher.init(Cipher.ENCRYPT_MODE, partnerKey);
-			byte[] encryptedBytes = cipher.doFinal(message.getBytes());
-			String encrypted = new String(Base64.getEncoder().encode(encryptedBytes));
-			System.out.println("encrypted: " + encrypted);
 			PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 			out.println(encrypted);
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		} catch (InvalidKeyException e) {
-			e.printStackTrace();
-		} catch (NoSuchPaddingException e) {
-			e.printStackTrace();
-		} catch (BadPaddingException e) {
-			e.printStackTrace();
-		} catch (IllegalBlockSizeException e) {
-			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -114,8 +82,14 @@ public class RSAClient {
 	
 	public static void main(String[] args) throws UnsupportedEncodingException{
 
-		new RSAClient();
-
+		RSAClient client = new RSAClient();
+		// wait for the server to be ready
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		client.start();
 
     }
 

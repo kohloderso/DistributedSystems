@@ -22,7 +22,7 @@ import java.util.concurrent.Executors;
  */
 public class RSAServer {
     public static final int port = 1234;
-    public static final int threadPoolSize = 10;
+    public static final int threadPoolSize = 2;
 
     private ExecutorService service;
     boolean listening = true;
@@ -30,46 +30,10 @@ public class RSAServer {
     private KeyPair myKP;
 
     public RSAServer() {
-        String name = "server";
-        KeyPairGenerator kpg = null;
-        try {
-            kpg = KeyPairGenerator.getInstance("RSA");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        kpg.initialize(512);
-        myKP = kpg.generateKeyPair();
+        myKP = RSA.generateKP("server");
+    }
 
-        try {
-            FileOutputStream out = new FileOutputStream("private" + name);
-            out.write(myKP.getPrivate().getEncoded());
-            out.close();
-            FileOutputStream out2 = new FileOutputStream("public" + name);
-            out2.write(myKP.getPublic().getEncoded());
-            out2.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        // get public key of other instance
-        Path path = Paths.get("public" + "client");
-        try {
-            byte[] encodedKey = Files.readAllBytes(path);
-            PublicKey publicKey =
-                    KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(encodedKey));
-            System.out.println(publicKey.toString());
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (InvalidKeySpecException e) {
-            e.printStackTrace();
-        }
-
+    public void start() {
         // open Serversocket and listen for messages
         try {
             service = Executors.newFixedThreadPool(threadPoolSize);
@@ -88,25 +52,6 @@ public class RSAServer {
         }
     }
 
-    public static PublicKey get(String filename)
-            throws Exception {
-
-        File f = new File(filename);
-        FileInputStream fis = new FileInputStream(f);
-        DataInputStream dis = new DataInputStream(fis);
-        byte[] keyBytes = new byte[(int)f.length()];
-        dis.readFully(keyBytes);
-        dis.close();
-
-        X509EncodedKeySpec spec =
-                new X509EncodedKeySpec(keyBytes);
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-        return kf.generatePublic(spec);
-    }
-
-
-
-
 
     class RequestHandler implements Runnable {
         private final Socket socket;
@@ -117,34 +62,24 @@ public class RSAServer {
         }
         public void run() {
             System.out.println("New Connection");
+            PublicKey partnerKey = RSA.getPublicKeyFromFile("client");
+            System.out.println("acquired public key");
             String inputLine;
-            try (
-                    BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream())); ) {
-                while( (inputLine = in.readLine()) != null) {
-                    System.out.println("Received: " + inputLine);
-                    String encryptedtext = inputLine;
+            boolean exit = false;
+            try (PrintWriter out = new PrintWriter(socket.getOutputStream(), true) ;
+                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+                while(!exit) {
+                    while( (inputLine = in.readLine()) != null) {
+                        System.out.println("Received: " + inputLine);
 
-                    // decode message
-                    try {
-                        Cipher cipher = Cipher.getInstance("RSA");
-                        cipher.init(Cipher.DECRYPT_MODE, myKP.getPrivate());
-                        byte[] ciphertextBytes = Base64.getDecoder().decode(encryptedtext.getBytes());
-                        byte[] decryptedBytes = cipher.doFinal(ciphertextBytes);
-                        String decryptedString = new String(decryptedBytes);
-                        System.out.println("decrypted (plaintext) = " + decryptedString);
-                    } catch (NoSuchAlgorithmException e) {
-                        e.printStackTrace();
-                    } catch (InvalidKeyException e) {
-                        e.printStackTrace();
-                    } catch (NoSuchPaddingException e) {
-                        e.printStackTrace();
-                    } catch (BadPaddingException e) {
-                        e.printStackTrace();
-                    } catch (IllegalBlockSizeException e) {
-                        e.printStackTrace();
+                        // decode message
+                        String message = RSA.decrypt(inputLine, myKP.getPrivate());
+                        if(message.equalsIgnoreCase("exit")) exit = true;
+                        String answer = RSA.encrypt("OK", partnerKey);
+                        out.println(answer);
                     }
-
                 }
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -155,6 +90,7 @@ public class RSAServer {
     public static void main(String[] args) throws UnsupportedEncodingException{
 
         RSAServer server = new RSAServer();
+        server.start();
 
     }
 
